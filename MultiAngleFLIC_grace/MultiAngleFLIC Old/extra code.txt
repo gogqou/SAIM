@@ -1,0 +1,226 @@
+	file_path = path + image_name + IntToStr( image_start_num ) + image_file_ext;
+	
+	if ( get_image_size(1, num_rows, num_cols, path, image_name) ) {
+    	cout << "\nnum_rows: " << num_rows << " num_cols: " << num_cols << "\n";
+    	Images = new int[ num_rows*num_cols*num_images ];
+    	for (i = 0; i < num_images; i++) {
+
+    		file_path = path + image_name + IntToStr( image_start_num + i ) + ".tif";
+
+    		flag = importImage(&Images[i*num_rows*num_cols], file_path, num_rows, num_cols);  //import the images
+
+    		cout << "flag: " << flag;
+
+    		if (flag != 1) {
+    		    cout << "\nAborting program - could not open images";
+    		    return 1;
+    		}
+    	}
+    }	
+    // linear now contains all floating point values in the comma-delimited
+    // data file.  now dump them to the screen to verify:
+    copy( linear.begin(), linear.end(), ostream_iterator<float>( cout, " " ) );
+	
+	
+	
+    //Output the image details
+    /*
+    cout << "\nnum_rows: " << num_rows << " num_cols: " << num_cols << "\n";
+    counter = 0;
+    for (i = 0; i < num_rows*num_cols*num_images; i++) {
+    	cout << counter << " " << images[i] << "\n" ;
+    	counter++;
+    }
+    */
+    
+    //test out the nearest neighbors and indexing
+    int m [9];
+    int n [9];
+    int num = nearestNeighbors(m, n, 5, 0, 10, 10);
+    cout << "num: " << num << "\n" << "m: ";
+    for (i = 0; i < num; i++) cout << m[i] << " ";
+    cout << "\nn: ";
+    for (i = 0; i < num; i++) cout << n[i] << " ";
+    cout << "\n";
+	
+	
+		//Write the FLIC curves to file
+	file_path = path + exp_name + "_FLIC.txt";
+    ofstream myfile (file_path.c_str());
+    if (myfile.is_open()) {
+    	int counter = 0;
+    	for (i =0; i < FLIC_points; i++) {
+    		for (j = 0; j < num_angles; j++) {
+    			myfile << FLIC[counter] << ", ";
+    			counter++;
+    		}
+    		myfile << "\n";
+    	}
+    	myfile.close();
+    }
+    else cout << "Unable to open file for writing the FLIC curves";
+    
+	
+	
+	
+	
+	MKL_INT n = N;
+	double a = 3;
+	MKL_INT incx = 1;
+	MKL_INT incy = 1;
+
+	double x[N];
+	double y[N];
+	x[0] = 1;
+	x[1] = 2;
+	x[2] = 3;
+	x[3] = 4;
+	y[0] = 5;
+	y[1] = 5;
+	y[2] = 5;
+	y[3] = 5;
+
+	std::cout << "hi intel2 Debug!\n";
+    std::cout << y[0] << " " << y[1] << " " << y[2] << " " << y[3] << "\n";
+
+
+    cblas_daxpy(n, a, x, incx, y, incy);
+
+    std::cout << y[0] << " " << y[1] << " " << y[2] << " " << y[3] << "\n";
+
+    complex<double> cmpx2(1, 1), cmpx3;
+    cmpx2 +=10;
+    cout << cmpx2 << " n1: " << n1 << "\n";
+    cmpx3 = 10;
+    cmpx3 = 20;
+    //cmpx2.re = 4;
+    cout << "cmpx2: " << cmpx2*10.0;
+    //cmpx2 = trl::asin(cmpx2);
+
+
+
+    double params [] = {lambdaEx, 50};
+
+    cout << "\nPex: " << P_Ex_Fromherz_MA(30*DTR, lambdaEx, 50) <<
+    		" Pem: " << P_Em_Fromherz_Simple(30*DTR, params);
+
+    double parameters [] = {0, 60*DTR, 50};
+
+    cout << "\nP_Em_theta: " << P_Em_theta(lambdaEx, parameters);
+    cout << "\nP_Em_theta_lambda: " << P_Em_theta_lambda(0, 60*DTR, lambdaEmMin, lambdaEmMax, 50);
+
+    //std::string s
+	
+	time_t start, end;
+	time(&start);
+	time(&end);
+	cout << "\nfinished - time: " << difftime(end,start) << " seconds";
+	cout << "\n" << ZGAP[0] << " " << ZGAP[1] << " " << ZGAP[2];
+	cout << "\n" << FLIC[0] << " " << FLIC[1] << " " << FLIC[2];
+	cout << "\n" << DERIV[0] << " " << DERIV[1] << " " << DERIV[2];
+	cout << "\n" << FLIC[0+12*FLIC_points] << " " << FLIC[1+12*FLIC_points] << " " << FLIC[2+12*FLIC_points];
+	cout << "\n" << DERIV[0+12*FLIC_points] << " " << DERIV[1+12*FLIC_points] << " " << DERIV[2+12*FLIC_points];
+
+
+
+    //nlsq_FLIC_Brute (Images, num_rows, num_cols, num_images, ZGAP, FLIC, DERIV, H2, 350, 1);
+
+    double fobs [13];
+    double fFLIC [13];
+    double r [13];
+
+    int row = 30;
+    int col = 30;
+
+    cout << "\nfobs, fFLic, r:\n";
+	for (i = 0; i < num_images; i++) {
+		fFLIC[i] = FLIC[i*FLIC_points+52];
+		fobs[i] =  Images[getIndex(row, col, i, num_rows, num_cols)];
+		r[i] = fobs[i] - 309*fFLIC[i];
+		r[i] = sqrt(r[i]*r[i]);
+		cout << fobs[i] << " " << fFLIC[i] << " " << r[i] << "\n";
+	}
+	double r_sum = 0;
+	for (i = 0; i < num_rows*num_cols; i++) {
+		r_sum = r_sum + R[i];
+	}
+
+	cout << "\nH, H2, abs(H1-H2):\n";
+	for (i = 0; i < num_rows*num_cols; i++) {
+		cout << H[i] << " " << H2[i] << " " << abs(H[i]-H2[i]) << "\n";
+	}
+
+	cout << "\nr_sum: " << r_sum << "\n";
+
+	file_path = path + exp_name + "_fobs.csv";
+	arrayWriter(fobs, 13, file_path);
+	file_path = path + exp_name + "_fFLIC.csv";
+	arrayWriter(fFLIC, 13, file_path);
+
+
+
+    //Calculate the best estimate height
+	/*
+    time_t tr_start_time, br_start_time, tr_end_time, br_end_time;
+    tr_start_time = time(NULL);
+    nlsq_FLIC_local_HAB (Images, num_rows, num_cols, num_images, ZGAP, FLIC, DERIV, H, A, B, R);
+    tr_end_time = time(NULL);
+
+    double *H2 = new double[num_rows*num_cols];
+    double A_ave = 0;
+    double B_ave = 0;
+
+
+    for (i = 0; i < num_rows*num_cols; i++) {
+    	A_ave = A_ave + A[i];
+    	B_ave = B_ave + B[i];
+    }
+    A_ave = A_ave/(num_rows*num_cols);
+    B_ave = B_ave/(num_rows*num_cols);
+
+    br_start_time = time(NULL);
+    nlsq_FLIC_Brute (Images, num_rows, num_cols, num_images, ZGAP, FLIC, DERIV, H2, A_ave, B_ave, R);
+    br_end_time = time(NULL);
+
+	cout << "\nH, H2, abs(H1-H2):\n";
+	for (i = 0; i < num_rows*num_cols; i++) {
+		cout << H[i] << " " << H2[i] << " " << abs(H[i]-H2[i]) << "\n";
+		//cout << H2[i] << "\n";
+	}
+
+    cout << "\ntime for nlsg_FLIC_local_HAB: " << tr_end_time - tr_start_time << "\n";
+    cout << "time for nlsg_FLIC_Brute: " << br_end_time - br_start_time << "\n";
+
+
+	file_path = path + exp_name + "H.csv";
+	arrayWriter(H, num_cols*num_rows, file_path);
+	cout << "\nnum_rows: " << num_rows << " num_cols: " << num_cols << "\n";
+	*/
+
+
+
+//For testing complex vml
+
+	/*
+	double theta2 = 30*DTR;
+	double thetaG = asin(n2*sin(theta2)/ng);
+	double theta1 = asin(ng*sin(thetaG)/n1);
+	double test = 4.0;
+	complex<double> ctest(test,0.1);
+	complex<double> ii(0,1.0);
+	ctest = 4.0 + 0.05*ii;
+	complex<double> div = 5*2;
+	MKL_Complex16 mkl_ctest, mkl_result, mkl_term1, mkl_prod;
+	mkl_ctest.real = ctest.real();
+	mkl_ctest.imag = ctest.imag();
+	mkl_term1.real = n1*sin(theta1);
+	mkl_term1.imag = 0.0;
+	vzDiv(1, &mkl_term1, &mkl_ctest, &mkl_term1);
+	vzAsin(1, &mkl_term1, &mkl_term1);
+	complex<double> result(mkl_term1.real, mkl_term1.imag);
+
+	cout << "casin: " << cmplxasin(n1*sin(theta1)/ctest) << " asin: " << asin(n1*sin(theta1)/test) << " mkl_asin: " << result;
+	cout << "\nctest/2: " << ctest/div << "\n" << cos(ctest);
+	return 1;
+
+	*/

@@ -1,0 +1,40 @@
+Program Mode: 1
+Model: Protein
+Model - Refractive index of ambient medium or cytoplasm (Membrane Model) (n3): 1.33
+Model - Refractive index cell membrane (Membrane model) or medium (Protein Model) (n2): 1.52
+Model - Refractive index glycocalyx (ng), 1.33
+Model - Refractive index SiO2 (n1), 1.46
+Model - Refractive index Si (n0)- real, 4.0
+Model - Refractive index Si (n0)- imaginary, 0.0
+Model - Thickness of cell membrane (nm), 4.0
+Model - Thickness of SiO2 layer (nm), 500.0
+Model - Dye dipole angle (degrees), 90
+Model - Fluorophore, mCherry
+Microscope - Wavelength of exciting laser (nm), 561
+Microscope - Range of emission wavelengths (nm), 590, 650
+Microscope - Maximum Objective Angle (degree), 67.0
+Curves - Range of FLIC Curves (height - nm), 51.27, 51.27
+Curves - Sampling rate of FLIC curves (height - nm), 1
+Curves - FLIC curve derivative step size (nm), 0.025
+Images - Number of images per sample, 13
+Images - Image angles (degrees), 0,5,10,15,20,25,30,35,40,45,50,55,60
+Images - Reference Intensities, 1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.1,1.25,1.25
+Images - number of sets, 1
+Images - file extension, .tif
+Fit - A Range, 30.0, 58981.5
+Fit - B Range, 0.0, 26214
+Fit - H Range, 30.0, 150.0
+Fit - A Guess, 16383
+Fit - B Guess, 7864
+Fit - Multistart step size, 25
+Fit - Solver, c
+Fit - Constraint, 0
+Fit - Starting Column, 22
+Fit - Starting Row, 22
+Fit - Maximum height change, 100
+Surface, 0 
+Surface - Smoothness, 5
+Surface - Interpolation, t
+Surface - Regularizer, g
+Surface - x-increment, 0.5
+Surface - y-increment, 0.5

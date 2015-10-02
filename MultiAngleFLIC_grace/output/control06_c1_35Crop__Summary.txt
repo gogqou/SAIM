@@ -1,0 +1,35 @@
+PARAMETERS: 
+
+Image Name: control06_c1_35Crop_
+Refractive Index - Buffer/Cytoplasm: 1.33
+Refractive Index - Membrane: 1.52
+Refractive Index - Glycocalyx: 1.33
+Refractive Index - Silicon Oxide: 1.46
+Refractive Index - Silicon: (4,0)
+Thickness - Cell Membrane (nm): 4
+Thickness - Silicon Oxide (nm): 500
+Fluorophore: mCherry
+Fluorophore Dipole Angle: 1.5708
+Excitation Wavelength: 561
+Emission Wavelength Min: 590
+Emission Wavelength Max: 650
+FLIC Curves - Max Z: 51.27
+FLIC Curves - Z spacing: 51.27
+FLIC Curves - Points: 2
+FLIC Curves - Derivative Step: 0.025
+Number of Images/Angles: 21
+Number of Image Sets: 1
+A Guess: 16383.8
+B Guess: 7864.2
+Z-Height - Lower Bounds: 25
+Z-Height - Upper Bounds: 150
+A - Lower Bounds: 30
+A - Upper Bounds: 58981.5
+B - Lower Bounds: 0
+B - Upper Bounds: 26214
+Cutoff Intensity: 65535
+MultiStart Step Size: 25
+Maximum displacement in constrained local fitting: 100
+Local fitting starting row: 22
+Local fitting starting column: 22
+Solver: c

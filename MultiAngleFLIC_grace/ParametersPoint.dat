@@ -1,0 +1,55 @@
+1. Program Mode: 22
+2. Dye - Fluorophore: Alexa488
+3. Dye - Dipole angle (only required for non-randomly oriented dyes; degrees): 90
+4. Model - Type: Point
+5. Model - Thickness of SiO2 layer (nm): 500.0
+6. Model - Refractive index SiO2 (n1): 1.46
+7. Model - Refractive index Si (n0)- real: 4.0
+8. Model - Refractive index Si (n0)- imaginary: 0.0
+9. Model (Membrane) - Refractive index of ambient medium or cytoplasm (n3): 1.33
+10. Model (Membrane) - Refractive index cell membrane (n2): 1.4
+11. Model (Membrane) - Refractive index glycocalyx (ng): 1.33
+12. Model (Membrane) - Thickness of cell membrane (nm): 4.0
+13. Model (Point, Cylinder, and Sphere) - Refractive index of ambient media or cytoplasm (n2): 1.33
+14. Model (Cylinder) - Cylinder verticle length (nm): 10
+15. Model (Sphere) - Sphere radius (nm): 100
+16. Microscope - Wavelength of exciting laser (nm): 488
+17. Microscope - Range of emission wavelengths (nm): 500, 550
+18. Microscope - Maximum Objective Angle (degree): 63.0
+19. Curves - Range of FLIC Curves (height - nm): 0, 1000
+20. Curves - Sampling rate of FLIC curves (height - nm): 10
+21. Curves - FLIC curve derivative step size (nm): 0.025
+22. Images - Number of images per angle stack: 11
+23. Images - Image angles (degrees): 0,5,10,15,20,25,30,35,40,45,50
+24. Images - Correct Intensities: 0
+25. Images - Reference Intensities: 1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0
+26. Images - Background subtraction: 0
+27. Images - Threshold area: 0
+28. Images - Number of angle stacks per image set: 1
+29. Images - 1st number in image sequences: 0
+30. Images - Image file extension: .tif
+31. Fit - Parameters: HoAB
+32. Fit - A Range: 30.0, 60000
+33. Fit - B Range: 0.0, 20000
+34. Fit - H Range (nm): 450.0, 550.0
+35. Fit - L Range (nm): 2.0, 100.0
+36. Fit - A Guess: 20000
+37. Fit - B Guess: 5000
+38. Fit - H Guess (nm): 500.0
+39. Fit - L Guess (nm): 20
+40. Fit - Multistart step size: 25
+41. Fit - Solver: l
+42. Fit - Constraint: 0
+43. Fit - Starting Column: 0
+44. Fit - Starting Row: 0
+45. Fit - Maximum height change: 100
+46. Fit - Use curves: 0
+47. Surface: 0 
+48. Surface - Smoothness: 5
+49. Surface - Interpolation method: t
+50. Surface - Regularizer: g
+51. Surface - x-increment: 0.5
+52. Surface - y-increment: 0.5
+53. Surface - number of fit pixels (Program mode 4 only): 200
+54. Threads: 8
+55. Report: 1

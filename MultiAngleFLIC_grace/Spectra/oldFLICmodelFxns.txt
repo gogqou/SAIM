@@ -1,0 +1,1527 @@
+extern double P_Ex_Fromherz(double theta3, double lambda, double dg);
+extern double P_Em_Fromherz(double theta3, void* param);
+extern double P_Em_theta(double lambda, void* param);
+extern double P_Em_theta_lambda(double theta3Min, double theta3Max, double lambdaMin, double lambdaMax, double dg);
+extern double P_ExVal_Fromherz(double theta2, void* param);
+extern double P_ExVal_theta(double lambda, void* param);
+extern double P_ExVal_theta_lambda(double theta2Min, double theta2Max, double lambdaMin, double lambdaMax, double dg);
+
+extern double Pex_Simple(double thetaEx, void* param);
+extern double Pex_Simple_thetaEx(double thetaExMin, double thetaExMax, double theta2, double lambda, double d2);
+extern double Pex_Simple_Sphere(double r, void* params);
+extern double Pex_Simple_Sphere_r_aplha_psi (double theta2, double thetaExMin, double thetaExMax, double lambda, double d2, double Rp);
+extern double Pex_Simple_Sphere_r_alpha (double psi, void* param);
+extern double Pex_Simple_Sphere_r(double alpha, void* param);
+
+extern double Pem_Simple(double theta2, void* param);
+extern double Pem_Simple_theta2_lambda_thetaEm(double theta2Min, double theta2Max, double lambdaMin, double lambdaMax, double d2, double thetaEmMin, double thetaEmMax);
+extern double Pem_Simple_theta2_lambda(double thetaEm, void* param) ;
+extern double Pem_Simple_theta2(double lambda, void* param);
+
+extern double Pem_SimpleOx(double theta2, void* param);
+extern double Pem_SimpleOx_theta2_lambda_thetaEm(double theta2Min, double theta2Max, double lambdaMin, double lambdaMax, double dox, double thetaEmMin, double thetaEmMax);
+extern double Pem_SimpleOx_theta2_lambda(double thetaEm, void* param) ;
+extern double Pem_SimpleOx_theta2(double lambda, void* param);
+
+extern double Pex_Simple_thetaEx_H(double theta2, double lambda, double dMin, double dMax);
+extern double Pex_Simple_thetaEx0toPI(double d, void* param);
+
+extern double generateFLICCurvesMem(double* ZGAP, double* FLIC, double* DERIV, int nimages);
+extern double generateFLICCurvesPoint(double* ZGAP, double* FLIC, double* DERIV, int nimages);
+extern double generateFLICCurvesPointOx(double* ZGAP, double* FLIC, double* DERIV, int nimages);
+extern double generateFLICCurvesSphere(double* ZGAP, double* FLIC, double* DERIV, int nimages);
+extern double generateFLICCurvesCylinder(double* ZGAP, double* FLIC, double* DERIV, int nimages);
+extern double generateFLICCurvesMemVAL(double* ZGAP, double* FLIC, double* DERIV, int nimages);
+
+
+//The probability function for excitation or emission derived by Lambacher
+//and Fromherz, 1996 and 2002 for a five layer system
+double P_Ex_Fromherz(double theta3, double lambda, double dg) {
+
+	//Calculate each theta
+	double theta2 = asin(n3*sin(theta3)/n2);	//Angle in Membrane
+	double thetaG = asin(n2*sin(theta2)/ng);	//Angle in glycocalyx
+	double theta1 = asin(ng*sin(thetaG)/n1);	//Angle in silicon oxide
+
+
+	//Calculate complex theta0.  C++ does not have a standard asin function for complex
+	//input.  Use Intel MKL instead.
+	MKL_Complex16 mkl_n0, mkl_theta0;
+	mkl_n0.real = n0.real();
+	mkl_n0.imag = n0.imag();
+	mkl_theta0.real = n1*sin(theta1);
+	mkl_theta0.imag = 0.0;
+	vzDiv(1, &mkl_theta0, &mkl_n0, &mkl_theta0);  	//Calculate n1*sin(theta1)/n0
+	vzAsin(1, &mkl_theta0, &mkl_theta0);			//Calculate asin(n1*sin(theta1)/n0)
+	complex<double> theta0(mkl_theta0.real, mkl_theta0.imag);  //Store the result in theta0
+
+
+	//Calculate the phase shift
+	double phi = (4*PI*n2/lambda)*d2*cos(theta2);
+
+	//Calculate the pi's for calculating he fresnel coefficients
+	complex<double> p0 = n0*cos(theta0);
+	double p1 = n1*cos(theta1);
+	double p2 = n2*cos(theta2);
+	double pg = ng*cos(thetaG);
+
+	//Calculate the qi's for calculating the fresnel coefficients
+	complex<double> q0 = cos(theta0)/n0;
+	double q1 = cos(theta1)/n1;
+	double q2 = cos(theta2)/n2;
+	double qg = cos(thetaG)/ng;
+
+	//Calculate the fresnel coefficients
+	double t32TE = 2*n3*cos(theta3)/(n3*cos(theta3) + n2*cos(theta2));
+	double t32TM = 2*n3*cos(theta3)/(n2*cos(theta3) + n3*cos(theta2));
+	double r23TE = (n2*cos(theta2) - n3*cos(theta3))/(n2*cos(theta2) + n3*cos(theta3));
+	double r23TM = (n3*cos(theta2) - n2*cos(theta3))/(n3*cos(theta2) + n2*cos(theta3));
+
+	//Calculate the Fresnesl coefficient for the layer system (gap, Si02, Si)
+	double kg = 2*PI*ng/lambda;
+	double k1 = 2*PI*n1/lambda;
+
+	double lg = kg*dg*cos(thetaG);
+	double l1 = k1*d1*cos(theta1);
+
+	complex<double> i(0,1);
+
+	complex<double> m11TE = cos(lg)*cos(l1) - (p1/pg)*sin(lg)*sin(l1);
+	complex<double> m12TE = -(i/p1)*cos(lg)*sin(l1) - (i/pg)*sin(lg)*cos(l1);
+	complex<double> m21TE = -i*pg*sin(lg)*cos(l1) - i*p1*cos(lg)*sin(l1);
+	complex<double> m22TE = -(pg/p1)*sin(lg)*sin(l1) + cos(lg)*cos(l1);
+
+	complex<double> m11TM = cos(lg)*cos(l1) - (q1/qg)*sin(lg)*sin(l1);
+	complex<double> m12TM = (-i/q1)*cos(lg)*sin(l1) - (i/qg)*sin(lg)*cos(l1);
+	complex<double> m21TM = -i*qg*sin(lg)*cos(l1) - i*q1*cos(lg)*sin(l1);
+	complex<double> m22TM = -(qg/q1)*sin(lg)*sin(l1) + cos(lg)*cos(l1);
+
+	complex<double> rTE = ((m11TE + m12TE*p0)*p2 - (m21TE + m22TE*p0)) /
+			((m11TE + m12TE*p0)*p2 + (m21TE + m22TE*p0));
+
+	complex<double> rTM = ((m11TM + m12TM*q0)*q2 - (m21TM + m22TM*q0)) /
+			((m11TM + m12TM*q0)*q2 + (m21TM + m22TM*q0));
+
+
+	//Calculate the probability of excitation or emmision
+
+	//complex<double> ifTE =   t32TE*(1. + rTE)/(1. - r23TE*rTE*exp(i*phi));
+	complex<double> ifTE =   1. + rTE;
+
+	complex<double> ifTM_p = t32TM*(1. - rTM)/(1. - r23TM*rTM*exp(i*phi));
+
+	complex<double> ifTM_n = t32TM*(1. + rTM)/(1. - r23TM*rTM*exp(i*phi));
+
+	double magSq_ifTE = abs(ifTE)*abs(ifTE);
+	double magSq_ifTM_p = abs(ifTM_p)*abs(ifTM_p);
+	double magSq_ifTM_n = abs(ifTM_n)*abs(ifTM_n);
+
+	//cout << "theta2: " << RTD*theta2; // << mkl_theta0.imag << " rTE: " << abs(rTE) << " ifTE: " << abs(ifTE) << "\n";
+	//cout << " t32TE:" << t32TE << " r23TE: " << r23TE << "\n";
+
+	double P = sin(thetaDye)*sin(thetaDye)*magSq_ifTE +
+			sin(thetaDye)*sin(thetaDye)*cos(theta2)*cos(theta2)*magSq_ifTM_p +
+			2*cos(thetaDye)*cos(thetaDye)*sin(theta2)*sin(theta2)*magSq_ifTM_n;
+
+	//Comment this out if no polarization
+	double gamma = 90*DTR;
+	P = sin(thetaDye)*sin(thetaDye)*sin(gamma)*sin(gamma)*magSq_ifTE +
+		sin(thetaDye)*sin(thetaDye)*cos(theta2)*cos(theta2)*cos(gamma)*cos(gamma)*magSq_ifTM_p +
+		2*cos(thetaDye)*cos(thetaDye)*sin(theta2)*sin(theta2)*cos(gamma)*cos(gamma)*magSq_ifTM_n;
+
+
+
+	return P;
+
+	//P could also be multiplied by an aperature function if necessary here
+
+}
+
+
+double P_Em_Fromherz(double theta3, void* param) {
+
+	double* dbl_point;
+	dbl_point = (double*) param;
+	double lambda = dbl_point[0];
+	double dg = dbl_point[1];
+
+	//Calculate each theta
+	double theta2 = asin(n3*sin(theta3)/n2);	//Angle in Membrane
+	double thetaG = asin(n2*sin(theta2)/ng);	//Angle in glycocalyx
+	double theta1 = asin(ng*sin(thetaG)/n1);	//Angle in silicon oxide
+
+	//Calculate complex theta0.  C++ does not have a standard asin function for complex
+	//input.  Use Intel MKL instead.
+	MKL_Complex16 mkl_n0, mkl_theta0;
+	mkl_n0.real = n0.real();
+	mkl_n0.imag = n0.imag();
+	mkl_theta0.real = n1*sin(theta1);
+	mkl_theta0.imag = 0.0;
+	vzDiv(1, &mkl_theta0, &mkl_n0, &mkl_theta0);	//Calculate n1*sin(theta1)/n0
+	vzAsin(1, &mkl_theta0, &mkl_theta0);			//Calculate asin(n1*sin(theta1)/n0)
+	complex<double> theta0(mkl_theta0.real, mkl_theta0.imag);   //Store the result in theta0
+
+
+	//Calculate the phase shift
+	double phi = (4*PI*n2/lambda)*d2*cos(theta2);
+
+	//Caculate the pi's for calculating he fresnel coefficients
+	complex<double> p0 = n0*cos(theta0);
+	double p1 = n1*cos(theta1);
+	double p2 = n2*cos(theta2);
+	double pg = ng*cos(thetaG);
+
+	//Caclulate the qi's for calculating the fresnel coefficients
+	complex<double> q0 = cos(theta0)/n0;
+	double q1 = cos(theta1)/n1;
+	double q2 = cos(theta2)/n2;
+	double qg = cos(thetaG)/ng;
+
+	//Calculate the fresnel coefficients
+	double t23TE = 2*n2*cos(theta2)/(n2*cos(theta2) + n3*cos(theta3));
+	double t23TM = 2*n2*cos(theta2)/(n3*cos(theta2) + n2*cos(theta3));
+	double r23TE = (n2*cos(theta2) - n3*cos(theta3))/(n2*cos(theta2) + n3*cos(theta3));
+	double r23TM = (n3*cos(theta2) - n2*cos(theta3))/(n3*cos(theta2) + n2*cos(theta3));
+
+	//Calculate the Fresnesl coefficient for the layer system (gap, Si02, Si)
+	double kg = 2*PI*ng/lambda;
+	double k1 = 2*PI*n1/lambda;
+
+	double lg = kg*dg*cos(thetaG);
+	double l1 = k1*d1*cos(theta1);
+
+	complex<double> i(0,1);
+
+	complex<double> m11TE = cos(lg)*cos(l1) - (p1/pg)*sin(lg)*sin(l1);
+	complex<double> m12TE = -(i/p1)*cos(lg)*sin(l1) - (i/pg)*sin(lg)*cos(l1);
+	complex<double> m21TE = -i*pg*sin(lg)*cos(l1) - i*p1*cos(lg)*sin(l1);
+	complex<double> m22TE = -(pg/p1)*sin(lg)*sin(l1) + cos(lg)*cos(l1);
+
+	complex<double> m11TM = cos(lg)*cos(l1) - (q1/qg)*sin(lg)*sin(l1);
+	complex<double> m12TM = (-i/q1)*cos(lg)*sin(l1) - (i/qg)*sin(lg)*cos(l1);
+	complex<double> m21TM = -i*qg*sin(lg)*cos(l1) - i*q1*cos(lg)*sin(l1);
+	complex<double> m22TM = -(qg/q1)*sin(lg)*sin(l1) + cos(lg)*cos(l1);
+
+	complex<double> one = 1;
+	complex<double> rTE = ((m11TE + m12TE*p0)*p2 - (m21TE + m22TE*p0)) /
+			((m11TE + m12TE*p0)*p2 + (m21TE + m22TE*p0));
+
+	complex<double> rTM = ((m11TM + m12TM*q0)*q2 - (m21TM + m22TM*q0)) /
+			((m11TM + m12TM*q0)*q2 + (m21TM + m22TM*q0));
+
+
+	//Calculate the probability of excitation or emission
+
+	//complex<double> ifTE =   t23TE*( 1. + rTE)/(1. - r23TE*rTE*exp(i*phi));
+	complex<double> ifTE =   1. + rTE;
+
+	complex<double> ifTM_p = t23TM*( 1. -  rTM)/(1. - r23TM*rTM*exp(i*phi));
+
+	complex<double> ifTM_n = t23TM*( 1. + rTM)/(1. - r23TM*rTM*exp(i*phi));
+
+
+
+	double magSq_ifTE = abs(ifTE)*abs(ifTE);
+	double magSq_ifTM_p = abs(ifTM_p)*abs(ifTM_p);
+	double magSq_ifTM_n = abs(ifTM_n)*abs(ifTM_n);
+
+	double U = sin(thetaDye)*sin(thetaDye)*magSq_ifTE +
+			sin(thetaDye)*sin(thetaDye)*cos(theta2)*cos(theta2)*magSq_ifTM_p +
+			2*cos(thetaDye)*cos(thetaDye)*sin(theta2)*sin(theta2)*magSq_ifTM_n;
+
+	//Comment this out if no polarization
+	//double gamma = 90*DTR;
+	//U = sin(thetaDye)*sin(thetaDye)*sin(gamma)*sin(gamma)*magSq_ifTE +
+	//	sin(thetaDye)*sin(thetaDye)*cos(theta2)*cos(theta2)*cos(gamma)*cos(gamma)*magSq_ifTM_p +
+	//	2*cos(thetaDye)*cos(thetaDye)*sin(theta2)*sin(theta2)*cos(gamma)*cos(gamma)*magSq_ifTM_n;
+
+	double Aout = n3*cos(theta3)/(n2*cos(theta2));
+
+	double P = sin(theta2)*Aout*U*gsl_spline_eval(spectra_spline, lambda, spectra_acc);
+
+	return P;
+}
+
+double P_Em_theta(double lambda, void* param) {
+
+
+	double* dbl_point;
+	dbl_point = (double*) param;
+	double theta3Min = dbl_point[0];
+	double theta3Max = dbl_point[1];
+	double dg = dbl_point[2];
+
+	double parameters [] = {lambda, dg};
+
+	double result, error;
+
+	gsl_integration_workspace * w
+	         = gsl_integration_workspace_alloc (500);
+
+
+	gsl_function F;
+	F.function = &P_Em_Fromherz;
+    F.params = &parameters;
+
+	gsl_integration_qag(&F, theta3Min, theta3Max, 0.0, 1e-6, 500, 3, w, &result, &error);
+
+	gsl_integration_workspace_free (w);
+
+
+	return result;
+}
+
+
+double P_Em_theta_lambda(double theta3Min, double theta3Max, double lambdaMin, double lambdaMax, double dg) {
+
+	double param [] = {theta3Min, theta3Max, dg};
+	double result, error;
+
+	gsl_integration_workspace * w
+			= gsl_integration_workspace_alloc (500);
+
+	gsl_function F;
+	F.function = &P_Em_theta;
+	F.params = &param;
+
+	gsl_integration_qag(&F, lambdaMin, lambdaMax, 0.0, 1e-6, 500, 3, w, &result, &error);
+
+	gsl_integration_workspace_free (w);
+
+	return result;
+}
+
+double P_ExVal_Fromherz(double theta2, void* param) {
+
+	double* dbl_point;
+	dbl_point = (double*) param;
+	double lambda = dbl_point[0];
+	double dg = dbl_point[1];
+
+	//Calculate each theta
+	double thetaG = asin(n2*sin(theta2)/ng);
+	double theta1 = asin(ng*sin(thetaG)/n1);
+	double theta3 = asin(n2*sin(theta2)/n3);
+
+	//Calculate complex theta0.  C++ does not have a standard asin function for complex
+	//input.  Use Intel MKL instead.
+	MKL_Complex16 mkl_n0, mkl_theta0;
+	mkl_n0.real = n0.real();
+	mkl_n0.imag = n0.imag();
+	mkl_theta0.real = n1*sin(theta1);
+	mkl_theta0.imag = 0.0;
+	vzDiv(1, &mkl_theta0, &mkl_n0, &mkl_theta0);	//Calculate n1*sin(theta1)/n0
+	vzAsin(1, &mkl_theta0, &mkl_theta0);			//Calculate asin(n1*sin(theta1)/n0)
+	complex<double> theta0(mkl_theta0.real, mkl_theta0.imag);   //Store the result in theta0
+
+
+	//Calculate the phase shift
+	double phi = (4*PI*n2/lambda)*d2*cos(theta2);
+
+	//Caculate the pi's for calculating he fresnel coefficients
+	complex<double> p0 = n0*cos(theta0);
+	double p1 = n1*cos(theta1);
+	double p2 = n2*cos(theta2);
+	double pg = ng*cos(thetaG);
+
+	//Caclulate the qi's for calculating the fresnel coefficients
+	complex<double> q0 = cos(theta0)/n0;
+	double q1 = cos(theta1)/n1;
+	double q2 = cos(theta2)/n2;
+	double qg = cos(thetaG)/ng;
+
+	//Calculate the fresnel coefficients
+	double t23TE = 2*n2*cos(theta2)/(n2*cos(theta2) + n3*cos(theta3));
+	double t23TM = 2*n2*cos(theta2)/(n3*cos(theta2) + n2*cos(theta3));
+	double r23TE = (n2*cos(theta2) - n3*cos(theta3))/(n2*cos(theta2) + n3*cos(theta3));
+	double r23TM = (n3*cos(theta2) - n2*cos(theta3))/(n3*cos(theta2) + n2*cos(theta3));
+
+	//Calculate the Fresnesl coefficient for the layer system (gap, Si02, Si)
+	double kg = 2*PI*ng/lambda;
+	double k1 = 2*PI*n1/lambda;
+
+	double lg = kg*dg*cos(thetaG);
+	double l1 = k1*d1*cos(theta1);
+
+	complex<double> i(0,1);
+
+	complex<double> m11TE = cos(lg)*cos(l1) - (p1/pg)*sin(lg)*sin(l1);
+	complex<double> m12TE = -(i/p1)*cos(lg)*sin(l1) - (i/pg)*sin(lg)*cos(l1);
+	complex<double> m21TE = -i*pg*sin(lg)*cos(l1) - i*p1*cos(lg)*sin(l1);
+	complex<double> m22TE = -(pg/p1)*sin(lg)*sin(l1) + cos(lg)*cos(l1);
+
+	complex<double> m11TM = cos(lg)*cos(l1) - (q1/qg)*sin(lg)*sin(l1);
+	complex<double> m12TM = (-i/q1)*cos(lg)*sin(l1) - (i/qg)*sin(lg)*cos(l1);
+	complex<double> m21TM = -i*qg*sin(lg)*cos(l1) - i*q1*cos(lg)*sin(l1);
+	complex<double> m22TM = -(qg/q1)*sin(lg)*sin(l1) + cos(lg)*cos(l1);
+
+	complex<double> one = 1;
+	complex<double> rTE = ((m11TE + m12TE*p0)*p2 - (m21TE + m22TE*p0)) /
+			((m11TE + m12TE*p0)*p2 + (m21TE + m22TE*p0));
+
+	complex<double> rTM = ((m11TM + m12TM*q0)*q2 - (m21TM + m22TM*q0)) /
+			((m11TM + m12TM*q0)*q2 + (m21TM + m22TM*q0));
+
+
+	//Calculate the probability of excitation or emission
+
+	complex<double> ifTE =   t23TE*( 1. + rTE)/(1. - r23TE*rTE*exp(i*phi));
+
+	complex<double> ifTM_p = t23TM*( 1. - rTM)/(1. - r23TM*rTM*exp(i*phi));
+
+	complex<double> ifTM_n = t23TM*( 1. + rTM)L/(1. - r23TM*rTM*exp(i*phi));
+
+	double magSq_ifTE = abs(ifTE)*abs(ifTE);
+	double magSq_ifTM_p = abs(ifTM_p)*abs(ifTM_p);
+	double magSq_ifTM_n = abs(ifTM_n)*abs(ifTM_n);
+
+	double U = sin(thetaDye)*sin(thetaDye)*magSq_ifTE +
+			sin(thetaDye)*sin(thetaDye)*cos(theta2)*cos(theta2)*magSq_ifTM_p +
+			2*cos(thetaDye)*cos(thetaDye)*sin(theta2)*sin(theta2)*magSq_ifTM_n;
+
+	double Ain = n2*cos(theta2)/(n3*cos(theta3));
+
+	double P = sin(theta2)*Ain*U;
+
+
+	return P;
+}
+
+double P_ExVal_theta(double lambda, void* param) {
+
+
+	double* dbl_point;
+	dbl_point = (double*) param;
+	double theta2Min = dbl_point[0];
+	double theta2Max = dbl_point[1];
+	double dg = dbl_point[2];
+
+	double parameters [] = {lambda, dg};
+
+	double result, error;
+
+	gsl_integration_workspace * w
+	         = gsl_integration_workspace_alloc (500);
+
+
+	gsl_function F;
+	F.function = &P_ExVal_Fromherz;
+    F.params = &parameters;
+
+	gsl_integration_qag(&F, theta2Min, theta2Max, 0.0, 1e-6, 500, 3, w, &result, &error);
+
+	gsl_integration_workspace_free (w);
+
+
+	return result;
+}
+
+
+double P_ExVal_theta_lambda(double theta2Min, double theta2Max, double lambdaMin, double lambdaMax, double dg) {
+
+	double param [] = {theta2Min, theta2Max, dg};
+	double result, error;
+
+	gsl_integration_workspace * w
+			= gsl_integration_workspace_alloc (500);
+
+	gsl_function F;
+	F.function = &P_ExVal_theta;
+	F.params = &param;
+
+	gsl_integration_qag(&F, lambdaMin, lambdaMax, 0.0, 1e-6, 500, 3, w, &result, &error);
+
+	gsl_integration_workspace_free (w);
+
+	return result;
+}
+
+//The probability function for excitation or emission derived by Lambacher
+//and Fromherz, 1996 and 2002 for a five layer system.  The dye dipole angle, thetaEx,
+//is a free parameter in this model and can be integrated over an arbitrary range - See
+//Pex_Simple_thetaEx.  Currently no apperature function or thetaEx distribution function is
+//in the model, but these could be added if desired
+double Pex_Simple(double thetaEx, void* param) {
+
+	double* dbl_point;
+	dbl_point = (double*) param;
+	double theta2 = dbl_point[0];
+	double lambda = dbl_point[1];
+	double d2 = dbl_point[2];
+
+	//Calculate each theta
+	double theta1 = asin(n2*sin(theta2)/n1);
+
+	//Calculate complex theta0.  C++ does not have a standard asin function for complex
+	//input.  Use Intel MKL instead.
+	MKL_Complex16 mkl_n0, mkl_theta0;
+	mkl_n0.real = n0.real();
+	mkl_n0.imag = n0.imag();
+	mkl_theta0.real = n1*sin(theta1);
+	mkl_theta0.imag = 0.0;
+	vzDiv(1, &mkl_theta0, &mkl_n0, &mkl_theta0);  	//Calculate n1*sin(theta1)/n0
+	vzAsin(1, &mkl_theta0, &mkl_theta0);			//Calculate asin(n1*sin(theta1)/n0)
+	complex<double> theta0(mkl_theta0.real, mkl_theta0.imag);  //Store the result in theta0
+
+	//Calculate the phase shift
+	double phi = (4*PI/lambda)*( n1*d1*cos(theta1) + n2*d2*cos(theta2) );
+
+	complex<double> i(0,1);
+
+	complex<double> rTE = ( n1*cos(theta1) - n0*cos(theta0) ) / ( n1*cos(theta1) + n0*cos(theta0) );
+
+	complex<double> rTM = ( n0*cos(theta1) - n1*cos(theta0) ) / ( n0*cos(theta1) + n1*cos(theta0) );
+
+
+	//Calculate the probability of excitation or emmision
+
+	complex<double> ifTE =   1. + rTE*exp(i*phi);
+
+	complex<double> ifTM_p = 1. - rTM*exp(i*phi);
+
+	complex<double> ifTM_n = 1. + rTM*exp(i*phi);
+
+	double magSq_ifTE = abs(ifTE)*abs(ifTE);
+	double magSq_ifTM_p = abs(ifTM_p)*abs(ifTM_p);
+	double magSq_ifTM_n = abs(ifTM_n)*abs(ifTM_n);
+
+	//cout << "theta2: " << RTD*theta2 << mkl_theta0.imag << " rTE: " << abs(rTE) << " ifTE: " << abs(ifTE) << "\n";
+
+	double U = sin(thetaEx)*sin(thetaEx)*magSq_ifTE +
+			sin(thetaEx)*sin(thetaEx)*cos(theta2)*cos(theta2)*magSq_ifTM_p +
+			2*cos(thetaEx)*cos(thetaEx)*sin(theta2)*sin(theta2)*magSq_ifTM_n;
+
+	//If polarization is not uniform, use the following expression.  Comment out if uniform polarization distribution is assumed
+	double gamma = 90*DTR;
+	U = sin(thetaEx)*sin(thetaEx)*sin(gamma)*sin(gamma)*magSq_ifTE +
+		sin(thetaEx)*sin(thetaEx)*cos(theta2)*cos(theta2)*cos(gamma)*cos(gamma)*magSq_ifTM_p +
+		2*cos(thetaEx)*cos(thetaEx)*sin(theta2)*sin(theta2)*cos(gamma)*cos(gamma)*magSq_ifTM_n;
+
+	double P = U; //sin(thetaEx)*U;  //P could also be multiplied by an ap fxn, theta distribution fxn, etc if desired
+
+	return P;
+
+}
+
+double Pem_Simple(double theta2, void* param) {
+
+	double* dbl_point;
+	dbl_point = (double*) param;
+	double d2 = dbl_point[0];
+	double thetaEm = dbl_point[1];
+	double lambda = dbl_point[2];
+
+	//Calculate each theta
+	double theta1 = asin(n2*sin(theta2)/n1);
+
+	//Calculate complex theta0.  C++ does not have a standard asin function for complex
+	//input.  Use Intel MKL instead.
+	MKL_Complex16 mkl_n0, mkl_theta0;
+	mkl_n0.real = n0.real();
+	mkl_n0.imag = n0.imag();
+	mkl_theta0.real = n1*sin(theta1);
+	mkl_theta0.imag = 0.0;
+	vzDiv(1, &mkl_theta0, &mkl_n0, &mkl_theta0);  	//Calculate n1*sin(theta1)/n0
+	vzAsin(1, &mkl_theta0, &mkl_theta0);			//Calculate asin(n1*sin(theta1)/n0)
+	complex<double> theta0(mkl_theta0.real, mkl_theta0.imag);  //Store the result in theta0
+
+	//Calculate the phase shift
+	double phi = (4*PI/lambda)*( n1*d1*cos(theta1) + n2*d2*cos(theta2) );
+
+	complex<double> i(0,1);
+
+	complex<double> rTE = ( n1*cos(theta1) - n0*cos(theta0) ) / ( n1*cos(theta1) + n0*cos(theta0) );
+
+	complex<double> rTM = ( n0*cos(theta1) - n1*cos(theta0) ) / ( n0*cos(theta1) + n1*cos(theta0) );
+
+
+	//Calculate the probability of excitation or emmision
+	complex<double> ifTE =   1. + rTE*exp(i*phi);
+
+	complex<double> ifTM_p = 1. - rTM*exp(i*phi);
+
+	complex<double> ifTM_n = 1. + rTM*exp(i*phi);
+
+	double magSq_ifTE = abs(ifTE)*abs(ifTE);
+	double magSq_ifTM_p = abs(ifTM_p)*abs(ifTM_p);
+	double magSq_ifTM_n = abs(ifTM_n)*abs(ifTM_n);
+
+	double U = sin(thetaEm)*sin(thetaEm)*magSq_ifTE +
+			sin(thetaEm)*sin(thetaEm)*cos(theta2)*cos(theta2)*magSq_ifTM_p +
+			2*cos(thetaEm)*cos(thetaEm)*sin(theta2)*sin(theta2)*magSq_ifTM_n;
+
+	//Comment out this if uniform polarization
+	//double gamma = 90*DTR;
+	//U = sin(thetaEm)*sin(thetaEm)*sin(gamma)*sin(gamma)*magSq_ifTE +
+	//		sin(thetaEm)*sin(thetaEm)*cos(theta2)*cos(theta2)*cos(gamma)*cos(gamma)*magSq_ifTM_p +
+	//		2*cos(thetaEm)*cos(thetaEm)*sin(theta2)*sin(theta2)*cos(gamma)*cos(gamma)*magSq_ifTM_n;
+
+	//double P = sin(theta2)*sin(thetaEm)*gsl_spline_eval(spectra_spline, lambda, spectra_acc)*U;  //P could also be multiplied by an ap fxn, etc if necessary
+	double P = sin(theta2)*gsl_spline_eval(spectra_spline, lambda, spectra_acc)*U;  //P could also be multiplied by an ap fxn, etc if necessary
+
+	return P;
+}
+
+
+//Integration of Pex_Simple over the dye dipole angle, thetaEx
+double Pex_Simple_thetaEx(double thetaExMin, double thetaExMax, double theta2, double lambda, double d2) {
+
+
+	double parameters [] = {theta2, lambda, d2};
+
+	double result, error;
+
+	gsl_integration_workspace * w
+	         = gsl_integration_workspace_alloc (500);
+
+
+	gsl_function F;
+	F.function = &Pex_Simple;
+    F.params = &parameters;
+
+	gsl_integration_qag(&F, thetaExMin, thetaExMax, 0.0, 1e-6, 500, 3, w, &result, &error);
+
+	gsl_integration_workspace_free (w);
+
+
+	return result;
+
+}
+
+//Integration of Pex_Simple over a range of heights - thetaEx will be also be integrated over 0 to PI
+double Pex_Simple_thetaEx_H(double theta2, double lambda, double dMin, double dMax) {
+
+	double parameters [] = {theta2, lambda};
+	double result, error;
+
+	gsl_integration_workspace * w
+	         = gsl_integration_workspace_alloc (500);
+
+	gsl_function F;
+	F.function = &Pex_Simple_thetaEx0toPI;
+    F.params = &parameters;
+
+	gsl_integration_qag(&F, dMin, dMax, 0.0, 1e-6, 500, 3, w, &result, &error);
+
+	gsl_integration_workspace_free (w);
+
+	return result;
+}
+
+//Integration of Pex_Simple from thetaEx 0 to PI - For use with Pex_Simple_thetaEx_H
+double Pex_Simple_thetaEx0toPI(double d, void* param) {
+
+	double* dbl_point;
+	dbl_point = (double*) param;
+	double theta2 = dbl_point[0];
+	double lambda = dbl_point[1];
+
+	double parameters [] = {theta2, lambda, d};
+	double result, error;
+
+	gsl_integration_workspace * w
+	         = gsl_integration_workspace_alloc (500);
+
+	gsl_function F;
+	F.function = &Pex_Simple;
+    F.params = &parameters;
+
+	gsl_integration_qag(&F, 0, PI, 0.0, 1e-6, 500, 3, w, &result, &error);
+
+	gsl_integration_workspace_free (w);
+
+
+	return result;
+
+}
+
+
+//Integration of Pem_Simple
+
+double Pem_Simple_theta2(double lambda, void* param) {
+
+	double* dbl_point;
+	dbl_point = (double*) param;
+	double d2 = dbl_point[0];
+	double thetaEm = dbl_point[1];
+	double theta2Min = dbl_point[2];
+	double theta2Max = dbl_point[3];
+
+	double parameters [] = {d2, thetaEm, lambda};
+
+	double result, error;
+
+	gsl_integration_workspace * w
+	         = gsl_integration_workspace_alloc (500);
+
+
+	gsl_function F;
+	F.function = &Pem_Simple;
+    F.params = &parameters;
+
+	gsl_integration_qag(&F, theta2Min, theta2Max, 0.0, 1e-6, 500, 3, w, &result, &error);
+
+	gsl_integration_workspace_free (w);
+
+
+	return result;
+}
+
+
+double Pem_Simple_theta2_lambda(double thetaEm, void* param) {
+
+	double* dbl_point;
+	dbl_point = (double*) param;
+	double d2 = dbl_point[0];
+	double theta2Min = dbl_point[1];
+	double theta2Max = dbl_point[2];
+	double lambdaMin = dbl_point[3];
+	double lambdaMax = dbl_point[4];
+
+
+	double parameters [] = {d2, thetaEm, theta2Min, theta2Max};
+	double result, error;
+
+	gsl_integration_workspace * w
+			= gsl_integration_workspace_alloc (500);
+
+	gsl_function F;
+	F.function = &Pem_Simple_theta2;
+	F.params = &parameters;
+
+	gsl_integration_qag(&F, lambdaMin, lambdaMax, 0.0, 1e-6, 500, 3, w, &result, &error);
+
+	gsl_integration_workspace_free (w);
+
+	return result;
+}
+
+double Pem_Simple_theta2_lambda_thetaEm(double theta2Min, double theta2Max, double lambdaMin, double lambdaMax, double d2, double thetaEmMin, double thetaEmMax) {
+
+	double parameters[] = {d2, theta2Min, theta2Max, lambdaMin, lambdaMax};
+	double result, error;
+
+	gsl_integration_workspace * w
+			= gsl_integration_workspace_alloc (500);
+
+	gsl_function F;
+	F.function = &Pem_Simple_theta2_lambda;
+	F.params = &parameters;
+
+	gsl_integration_qag(&F, thetaEmMin, thetaEmMax, 0.0, 1e-6, 500, 3, w, &result, &error);
+
+	gsl_integration_workspace_free (w);
+
+	return result;
+}
+
+
+//Pex_Simple_Sphere - Calculates Pex Simple at a position inside of a sphere.  described by radial position, r and
+//inclination angle alpha (param[3]).  Can integrate this function over r, alpha, and azimuthal angle psi with
+// the function Pex_Simple_Sphere_psi_alpha_r to describe the sum excitation of a fluorescent nanoparticle.
+double Pex_Simple_Sphere(double r, void* param) {
+
+	double* dbl_point;
+	dbl_point = (double*) param;
+	double theta2 = dbl_point[0];
+	double thetaExMin = dbl_point[1];
+	double thetaExMax = dbl_point[2];
+	double lambda = dbl_point[3];
+	double d2 = dbl_point[4];
+	double alpha = dbl_point[5];
+
+	double h = r*cos(alpha) + d2;
+
+	return r*r*sin(alpha)*Pex_Simple_thetaEx(thetaExMin, thetaExMax, theta2, lambda, h);
+
+}
+
+
+double Pex_Simple_Sphere_r_alpha_psi(double theta2, double thetaExMin, double thetaExMax, double lambda, double d2, double Rp) {  //here d2 is the distance from the center of the sphere to the SiO2 and must be >= Rp
+
+	double parameters [] = {theta2, thetaExMin, thetaExMax, lambda, d2, Rp};
+	double result, error;
+
+	gsl_integration_workspace * w
+			= gsl_integration_workspace_alloc (500);
+
+	gsl_function F;
+	F.function = &Pex_Simple_Sphere_r_alpha;
+	F.params = &parameters;
+
+	//Integrate over psi (outermost integarl) - azimuthal angle
+	gsl_integration_qag(&F, 0, PI/2, 0.0, 1e-6, 500, 3, w, &result, &error);
+
+	gsl_integration_workspace_free (w);
+
+	return result;
+
+}
+
+double Pex_Simple_Sphere_r_alpha(double psi, void* param) {
+
+	double* dbl_point;
+	dbl_point = (double*) param;
+	double theta2 = dbl_point[0];
+	double thetaExMin = dbl_point[1];
+	double thetaExMax = dbl_point[2];
+	double lambda = dbl_point[3];
+	double d2 = dbl_point[4];
+	double Rp = dbl_point[5];
+
+	double parameters [] = {theta2, thetaExMin, thetaExMax, lambda, d2, Rp};
+
+	double result, error;
+
+	gsl_integration_workspace * w
+	         = gsl_integration_workspace_alloc (500);
+
+
+	gsl_function F;
+	F.function = &Pex_Simple_Sphere_r;
+    F.params = &parameters;
+
+    //Integrate over alpha (middle integral) - inclination angle
+	gsl_integration_qag(&F, 0, PI, 0.0, 1e-6, 500, 3, w, &result, &error);
+
+	gsl_integration_workspace_free (w);
+
+
+	return result;
+
+}
+
+
+double Pex_Simple_Sphere_r(double alpha, void* param) {
+
+	double* dbl_point;
+	dbl_point = (double*) param;
+	double theta2 = dbl_point[0];
+	double thetaExMin = dbl_point[1];
+	double thetaExMax = dbl_point[2];
+	double lambda = dbl_point[3];
+	double d2 = dbl_point[4];
+	double Rp = dbl_point[5];
+
+	double parameters [] = {theta2, thetaExMin, thetaExMax, lambda, d2, alpha};
+
+	double result, error;
+
+	gsl_integration_workspace * w
+	         = gsl_integration_workspace_alloc (500);
+
+
+	gsl_function F;
+	F.function = &Pex_Simple_Sphere;
+    F.params = &parameters;
+
+    //Integrate over r (innermost integral) - radius
+	gsl_integration_qag(&F, 0, Rp, 0.0, 1e-6, 500, 3, w, &result, &error);
+
+	gsl_integration_workspace_free (w);
+
+
+	return result;
+
+}
+
+/*
+double P_Em_Simple(double theta2, double lambda, double d2, double thetaEm) {
+
+	//Calculate each theta
+	double theta1 = asin(n2*sin(theta2)/n1);
+
+	//Calculate complex theta0.  C++ does not have a standard asin function for complex
+	//input.  Use Intel MKL instead.
+	MKL_Complex16 mkl_n0, mkl_theta0;
+	mkl_n0.real = n0.real();
+	mkl_n0.imag = n0.imag();
+	mkl_theta0.real = n1*sin(theta1);
+	mkl_theta0.imag = 0.0;
+	vzDiv(1, &mkl_theta0, &mkl_n0, &mkl_theta0);  	//Calculate n1*sin(theta1)/n0
+	vzAsin(1, &mkl_theta0, &mkl_theta0);			//Calculate asin(n1*sin(theta1)/n0)
+	complex<double> theta0(mkl_theta0.real, mkl_theta0.imag);  //Store the result in theta0
+
+	//Calculate the phase shift
+	double phi = (4*PI/lambda)*( n1*d1*cos(theta1) + n2*d2*cos(theta2) );
+
+	complex<double> i(0,1);
+
+	complex<double> rTE = ( n1*cos(theta1) - n0*cos(theta0) ) / ( n1*cos(theta1) + n0*cos(theta0) );
+
+	complex<double> rTM = ( n0*cos(theta1) - n1*cos(theta0) ) / ( n0*cos(theta1) + n1*cos(theta0) );
+
+
+	//Calculate the probability of excitation or emmision
+	complex<double> ifTE =   1. + rTE*exp(i*phi);
+
+	complex<double> ifTM_p = 1. - rTM*exp(i*phi);
+
+	complex<double> ifTM_n = 1. + rTM*exp(i*phi);
+
+	double magSq_ifTE = abs(ifTE)*abs(ifTE);
+	double magSq_ifTM_p = abs(ifTM_p)*abs(ifTM_p);
+	double magSq_ifTM_n = abs(ifTM_n)*abs(ifTM_n);
+
+	double U = sin(thetaEm)*sin(thetaEm)*magSq_ifTE +
+			sin(thetaEm)*sin(thetaEm)*cos(theta2)*cos(theta2)*magSq_ifTM_p +
+			2*cos(thetaEm)*cos(thetaEm)*sin(theta2)*sin(theta2)*magSq_ifTM_n;
+
+	double P = sin(theta2)*sin(thetaEm)*U*gsl_spline_eval(spectra_spline, lambda, spectra_acc);  //P could also be multiplied by an ap fxn, etc if necessary
+
+	return P;
+
+}
+*/
+
+//A simple excitation model in which the parameter dox (oxide thickness is varied; d2 = 0)
+double Pex_SimpleOx(double thetaEx, void* param) {
+
+	double* dbl_point;
+	dbl_point = (double*) param;
+	double theta2 = dbl_point[0];
+	double lambda = dbl_point[1];
+	double dox = dbl_point[2];
+	double dg = 0;
+
+	//Calculate each theta
+	double theta1 = asin(n2*sin(theta2)/n1);
+
+	//Calculate complex theta0.  C++ does not have a standard asin function for complex
+	//input.  Use Intel MKL instead.
+	MKL_Complex16 mkl_n0, mkl_theta0;
+	mkl_n0.real = n0.real();
+	mkl_n0.imag = n0.imag();
+	mkl_theta0.real = n1*sin(theta1);
+	mkl_theta0.imag = 0.0;
+	vzDiv(1, &mkl_theta0, &mkl_n0, &mkl_theta0);  	//Calculate n1*sin(theta1)/n0
+	vzAsin(1, &mkl_theta0, &mkl_theta0);			//Calculate asin(n1*sin(theta1)/n0)
+	complex<double> theta0(mkl_theta0.real, mkl_theta0.imag);  //Store the result in theta0
+
+	//Calculate the phase shift
+	double phi = (4*PI/lambda)*( n1*dox*cos(theta1) + n2*dg*cos(theta2) );
+
+	complex<double> i(0,1);
+
+	complex<double> rTE = ( n1*cos(theta1) - n0*cos(theta0) ) / ( n1*cos(theta1) + n0*cos(theta0) );
+
+	complex<double> rTM = ( n0*cos(theta1) - n1*cos(theta0) ) / ( n0*cos(theta1) + n1*cos(theta0) );
+
+
+	//Calculate the probability of excitation or emmision
+
+	complex<double> ifTE =   1. + rTE*exp(i*phi);
+
+	complex<double> ifTM_p = 1. - rTM*exp(i*phi);
+
+	complex<double> ifTM_n = 1. + rTM*exp(i*phi);
+
+	double magSq_ifTE = abs(ifTE)*abs(ifTE);
+	double magSq_ifTM_p = abs(ifTM_p)*abs(ifTM_p);
+	double magSq_ifTM_n = abs(ifTM_n)*abs(ifTM_n);
+
+	double U = sin(thetaEx)*sin(thetaEx)*magSq_ifTE +
+			sin(thetaEx)*sin(thetaEx)*cos(theta2)*cos(theta2)*magSq_ifTM_p +
+			2*cos(thetaEx)*cos(thetaEx)*sin(theta2)*sin(theta2)*magSq_ifTM_n;
+
+	//If polarization is not uniform, use the following expression.  Comment out if uniform polarization distribution is assumed
+	double gamma = 90*DTR;
+	U = sin(thetaEx)*sin(thetaEx)*sin(gamma)*sin(gamma)*magSq_ifTE +
+		sin(thetaEx)*sin(thetaEx)*cos(theta2)*cos(theta2)*cos(gamma)*cos(gamma)*magSq_ifTM_p +
+		2*cos(thetaEx)*cos(thetaEx)*sin(theta2)*sin(theta2)*cos(gamma)*cos(gamma)*magSq_ifTM_n;
+
+
+	double P = U; //sin(thetaEx)*U;  //P could also be multiplied by an ap fxn, theta distribution fxn, etc if desired
+
+	return P;
+
+}
+
+//Integration of Pex_SimpleOx over the dye dipole angle, thetaEx
+double Pex_SimpleOx_thetaEx(double thetaExMin, double thetaExMax, double theta2, double lambda, double dox) {
+
+
+	double parameters [] = {theta2, lambda, dox};
+
+	double result, error;
+
+	gsl_integration_workspace * w
+	         = gsl_integration_workspace_alloc (500);
+
+
+	gsl_function F;
+	F.function = &Pex_SimpleOx;
+    F.params = &parameters;
+
+	gsl_integration_qag(&F, thetaExMin, thetaExMax, 0.0, 1e-6, 500, 3, w, &result, &error);
+
+	gsl_integration_workspace_free (w);
+
+
+	return result;
+
+}
+
+//Function for measuring oxide thickness - must still be tested
+double Pem_SimpleOx(double theta2, void* param) {
+
+	double* dbl_point;
+	dbl_point = (double*) param;
+	double dox = dbl_point[0];
+	double thetaEm = dbl_point[1];
+	double lambda = dbl_point[2];
+	double dg = 0;
+
+	//Calculate each theta
+	double theta1 = asin(n2*sin(theta2)/n1);
+
+	//Calculate complex theta0.  C++ does not have a standard asin function for complex
+	//input.  Use Intel MKL instead.
+	MKL_Complex16 mkl_n0, mkl_theta0;
+	mkl_n0.real = n0.real();
+	mkl_n0.imag = n0.imag();
+	mkl_theta0.real = n1*sin(theta1);
+	mkl_theta0.imag = 0.0;
+	vzDiv(1, &mkl_theta0, &mkl_n0, &mkl_theta0);  	//Calculate n1*sin(theta1)/n0
+	vzAsin(1, &mkl_theta0, &mkl_theta0);			//Calculate asin(n1*sin(theta1)/n0)
+	complex<double> theta0(mkl_theta0.real, mkl_theta0.imag);  //Store the result in theta0
+
+	//Calculate the phase shift
+	double phi = (4*PI/lambda)*( n1*dox*cos(theta1) + n2*dg*cos(theta2) );
+
+	complex<double> i(0,1);
+
+	complex<double> rTE = ( n1*cos(theta1) - n0*cos(theta0) ) / ( n1*cos(theta1) + n0*cos(theta0) );
+
+	complex<double> rTM = ( n0*cos(theta1) - n1*cos(theta0) ) / ( n0*cos(theta1) + n1*cos(theta0) );
+
+
+	//Calculate the probability of excitation or emmision
+	complex<double> ifTE =   1. + rTE*exp(i*phi);
+
+	complex<double> ifTM_p = 1. - rTM*exp(i*phi);
+
+	complex<double> ifTM_n = 1. + rTM*exp(i*phi);
+
+	double magSq_ifTE = abs(ifTE)*abs(ifTE);
+	double magSq_ifTM_p = abs(ifTM_p)*abs(ifTM_p);
+	double magSq_ifTM_n = abs(ifTM_n)*abs(ifTM_n);
+
+	double U = sin(thetaEm)*sin(thetaEm)*magSq_ifTE +
+			sin(thetaEm)*sin(thetaEm)*cos(theta2)*cos(theta2)*magSq_ifTM_p +
+			2*cos(thetaEm)*cos(thetaEm)*sin(theta2)*sin(theta2)*magSq_ifTM_n;
+
+	//double P = sin(theta2)*sin(thetaEm)*gsl_spline_eval(spectra_spline, lambda, spectra_acc)*U;  //P could also be multiplied by an ap fxn, etc if necessary
+	double P = sin(theta2)*gsl_spline_eval(spectra_spline, lambda, spectra_acc)*U;  //P could also be multiplied by an ap fxn, etc if necessary
+
+	return P;
+}
+
+//Integration of Pem Simple Ox
+double Pem_SimpleOx_theta2(double lambda, void* param) {
+
+	double* dbl_point;
+	dbl_point = (double*) param;
+	double dox = dbl_point[0];
+	double thetaEm = dbl_point[1];
+	double theta2Min = dbl_point[2];
+	double theta2Max = dbl_point[3];
+
+	double parameters [] = {dox, thetaEm, lambda};
+
+	double result, error;
+
+	gsl_integration_workspace * w
+	         = gsl_integration_workspace_alloc (500);
+
+
+	gsl_function F;
+	F.function = &Pem_SimpleOx;
+    F.params = &parameters;
+
+	gsl_integration_qag(&F, theta2Min, theta2Max, 0.0, 1e-6, 500, 3, w, &result, &error);
+
+	gsl_integration_workspace_free (w);
+
+
+	return result;
+}
+
+
+double Pem_SimpleOx_theta2_lambda(double thetaEm, void* param) {
+
+	double* dbl_point;
+	dbl_point = (double*) param;
+	double dox = dbl_point[0];
+	double theta2Min = dbl_point[1];
+	double theta2Max = dbl_point[2];
+	double lambdaMin = dbl_point[3];
+	double lambdaMax = dbl_point[4];
+
+
+	double parameters [] = {dox, thetaEm, theta2Min, theta2Max};
+	double result, error;
+
+	gsl_integration_workspace * w
+			= gsl_integration_workspace_alloc (500);
+
+	gsl_function F;
+	F.function = &Pem_SimpleOx_theta2;
+	F.params = &parameters;
+
+	gsl_integration_qag(&F, lambdaMin, lambdaMax, 0.0, 1e-6, 500, 3, w, &result, &error);
+
+	gsl_integration_workspace_free (w);
+
+	return result;
+}
+
+double Pem_SimpleOx_theta2_lambda_thetaEm(double theta2Min, double theta2Max, double lambdaMin, double lambdaMax, double dox, double thetaEmMin, double thetaEmMax) {
+
+	double parameters[] = {dox, theta2Min, theta2Max, lambdaMin, lambdaMax};
+	double result, error;
+
+	gsl_integration_workspace * w
+			= gsl_integration_workspace_alloc (500);
+
+	gsl_function F;
+	F.function = &Pem_SimpleOx_theta2_lambda;
+	F.params = &parameters;
+
+	gsl_integration_qag(&F, thetaEmMin, thetaEmMax, 0.0, 1e-6, 500, 3, w, &result, &error);
+
+	gsl_integration_workspace_free (w);
+
+	return result;
+}
+
+
+double Pex_SimpleOxRandom(double theta2, double lambda, double dox) {
+
+	double dg = 0;
+
+	//Calculate each theta
+	double theta1 = asin(n2*sin(theta2)/n1);
+
+	//Calculate complex theta0.  C++ does not have a standard asin function for complex
+	//input.  Use Intel MKL instead.
+	MKL_Complex16 mkl_n0, mkl_theta0;
+	mkl_n0.real = n0.real();
+	mkl_n0.imag = n0.imag();
+	mkl_theta0.real = n1*sin(theta1);
+	mkl_theta0.imag = 0.0;
+	vzDiv(1, &mkl_theta0, &mkl_n0, &mkl_theta0);  	//Calculate n1*sin(theta1)/n0
+	vzAsin(1, &mkl_theta0, &mkl_theta0);			//Calculate asin(n1*sin(theta1)/n0)
+	complex<double> theta0(mkl_theta0.real, mkl_theta0.imag);  //Store the result in theta0
+
+	//Calculate the phase shift
+	double phi = (4*PI/lambda)*( n1*dox*cos(theta1) + n2*dg*cos(theta2) );
+
+	complex<double> i(0,1);
+	complex<double> rTE = ( n1*cos(theta1) - n0*cos(theta0) ) / ( n1*cos(theta1) + n0*cos(theta0) );
+	complex<double> rTM = ( n0*cos(theta1) - n1*cos(theta0) ) / ( n0*cos(theta1) + n1*cos(theta0) );
+
+
+
+	//Calculate the probability of excitation or emmision
+	complex<double> ifTE =   1. + rTE*exp(i*phi);
+	complex<double> ifTM_p = 1. - rTM*exp(i*phi);
+	complex<double> ifTM_n = 1. + rTM*exp(i*phi);
+
+	cout << "real: " << mkl_theta0.real << " imag: " << mkl_theta0.imag << " rTE: " << abs(rTE) << " rTM: " << abs(rTM) << " ifTE: " << abs(ifTE) << " ifTM_p: " << abs(ifTM_p) << "\n";
+
+	double gamma = 0*DTR;
+
+	double U = cos(gamma)*cos(gamma)*cos(theta2)*cos(theta2)*abs(ifTM_p)*abs(ifTM_p) + sin(gamma)*sin(gamma)*abs(ifTE)*abs(ifTE) +
+			2*cos(gamma)*cos(gamma)*sin(theta2)*sin(theta2)*abs(ifTM_n)*abs(ifTM_n);
+
+	//If unpolarized
+	//U = cos(theta2)*cos(theta2)*abs(ifTM_p)*abs(ifTM_p) + abs(ifTE)*abs(ifTE) + 2*sin(theta2)*sin(theta2)*abs(ifTM_n)*abs(ifTM_n);
+
+	return U;
+
+}
+
+
+double generateFLICCurvesMem(double* ZGAP, double* FLIC, double* DERIV, int nimages) {
+
+	int i, j, counter;
+	double Pex;
+	double *Pem;
+	Pem = new double[FLIC_points];
+	double max_I = -1.0;
+
+
+	//Allocate ZGAP, the z-heights of the membrane that the FLIC intensities will be calculated
+	//for
+	for (i = 0; i<FLIC_points; i++) {
+		ZGAP[i] = i*zGapSpacing + zGapMin;
+	}
+
+	//Calculate Pem for each height
+	cout << "\nCalculating Pem for FLIC...\n";
+	#pragma omp parallel for private(j)
+	for (j=0; j < FLIC_points; j++) {
+		Pem[j] = P_Em_theta_lambda(0, thetaObjMax, lambdaEmMin, lambdaEmMax, ZGAP[j]);
+		//Pem[j] = P_Em_theta_lambda(0, thetaObjMax, lambdaEmMin, lambdaEmMax, ZGAP[j])*P_ExVal_theta_lambda(0, thetaObjMax, 487, 489, ZGAP[j]);;
+		//cout << "Pem[" << j << "]: " << Pem[j] << "\n";
+	}
+
+	//Loop through all the input parameters and calculate Pex and Pex*Pem
+	cout << "Calculating Pex for FLIC...\n";
+	#pragma omp parallel for private(i,j)
+	for (i = 0; i < nimages; i++) {
+		for (j = 0; j < FLIC_points; j++) {
+			Pex = P_Ex_Fromherz(thetaLaser[i], lambdaEx, ZGAP[j]);
+			FLIC[i*FLIC_points + j] = Pex*Pem[j];
+			//FLIC[i*FLIC_points + j] = Pex;
+			//FLIC[i*FLIC_points + j] = Pem[j];
+
+		}
+	}
+
+	//Calculate the derivatives of the FLIC curves
+	//Calculate Pem for each height - Deriv
+	cout << "Calculating Pem for FLIC - Deriv...\n";
+	#pragma omp parallel for private(j)
+	for (j = 0; j < FLIC_points; j++) {
+		///Pem[j] = P_Em_theta_lambda(0, thetaObjMax, lambdaEmMin, lambdaEmMax, ZGAP[j]+zGap_derivStep);
+	}
+
+	//Loop through all the input parameters and calculate Pex and Pex*Pem - Deriv
+	cout << "Calculating Pex for FLIC - Deriv...\n";
+	#pragma omp parallel for private(i,j)
+	for (i = 0; i < nimages; i++) {
+		for (j = 0; j < FLIC_points; j++) {
+			Pex = P_Ex_Fromherz(thetaLaser[i], lambdaEx, ZGAP[j]+zGap_derivStep);
+			//DERIV[i*FLIC_points + j] = (Pex*Pem[j] - FLIC[i*FLIC_points + j])/zGap_derivStep;
+			DERIV[i*FLIC_points + j] = (Pex - FLIC[i*FLIC_points + j])/zGap_derivStep;
+			//DERIV[i*FLIC_points + j] = (Pem[j] - FLIC[i*FLIC_points + j])/zGap_derivStep;
+
+		}
+	}
+
+	//Normalize the FLIC curves
+	for (i = 0; i < nimages*FLIC_points; i++) {
+		if (FLIC[i] > max_I) {
+			max_I = FLIC[i];
+		}
+	}
+	for (i = 0; i < nimages*FLIC_points; i++) {
+		FLIC[i] = FLIC[i]/max_I;
+		DERIV[i] = DERIV[i]/max_I;
+	}
+
+	delete [] Pem;
+
+	return max_I;
+}
+
+
+double generateFLICCurvesMemVAL(double* ZGAP, double* FLIC, double* DERIV, int nimages) {
+
+	int i, j, counter;
+	double *Pex;
+	Pex = new double[FLIC_points];
+	double max_I = -1.0;
+
+
+	//Allocate ZGAP, the z-heights of the membrane that the FLIC intensities will be calculated
+	//for
+	for (i = 0; i<FLIC_points; i++) {
+		ZGAP[i] = i*zGapSpacing + zGapMin;
+	}
+
+	//Calculate Pem for each height
+	cout << "\nCalculating Pem for FLIC...\n";
+	#pragma omp parallel for private(j)
+	for (j=0; j < FLIC_points; j++) {
+		cout << j << " ";
+		//lambdaEmMin = 478;
+		//lambdaEmMax = 498;
+		//Pex[j] = P_ExVal_theta_lambda(0, thetaObjMax, lambdaEmMin, lambdaEmMax, ZGAP[j]);
+
+		//lambdaEmMin = 500;
+		//lambdaEmMax = 550;
+		//Pex[j] = Pex[j]*P_Em_theta_lambda(0, thetaObjMax, lambdaEmMin, lambdaEmMax, ZGAP[j]);
+		Pex[j] = P_Em_theta_lambda(0, thetaObjMax, lambdaEmMin, lambdaEmMax, ZGAP[j]);
+	}
+
+	//Loop through all the input parameters and calculate Pex and Pex*Pem
+	cout << "Calculating Pex for FLIC...\n";
+	#pragma omp parallel for private(i,j)
+	for (i = 0; i < nimages; i++) {
+		for (j = 0; j < FLIC_points; j++) {
+			FLIC[i*FLIC_points + j] = Pex[j];
+		}
+
+	}
+
+	//Calculate the derivatives of the FLIC curves
+	//Calculate Pem for each height - Deriv
+	cout << "Calculating Pem for FLIC - Deriv...\n";
+	#pragma omp parallel for private(j)
+	for (j = 0; j < FLIC_points; j++) {
+		cout  << j << " ";
+		lambdaEmMin = 478;
+		lambdaEmMax = 498;
+		//Pex[j] = P_ExVal_theta_lambda(0, thetaObjMax, lambdaEmMin, lambdaEmMax, ZGAP[j]+zGap_derivStep);
+
+		lambdaEmMin = 500;
+		lambdaEmMax = 550;
+		//Pex[j] = Pex[j]*P_Em_theta_lambda(0, thetaObjMax, lambdaEmMin, lambdaEmMax, ZGAP[j]+zGap_derivStep);
+		Pex[j] = P_Em_theta_lambda(0, thetaObjMax, lambdaEmMin, lambdaEmMax, ZGAP[j]+zGap_derivStep);
+	}
+
+	//Loop through all the input parameters and calculate Pex and Pex*Pem - Deriv
+	cout << "Calculating Pex for FLIC - Deriv...\n";
+	#pragma omp parallel for private(i,j)
+	for (i = 0; i < nimages; i++) {
+		for (j = 0; j < FLIC_points; j++) {
+			DERIV[i*FLIC_points + j] = (Pex[j] - FLIC[i*FLIC_points + j])/zGap_derivStep;
+		}
+	}
+
+	//Normalize the FLIC curves
+	for (i = 0; i < nimages*FLIC_points; i++) {
+		if (FLIC[i] > max_I) {
+			max_I = FLIC[i];
+		}
+	}
+	for (i = 0; i < nimages*FLIC_points; i++) {
+		FLIC[i] = FLIC[i]/max_I;
+		DERIV[i] = DERIV[i]/max_I;
+	}
+
+	delete [] Pex;
+
+	return max_I;
+}
+
+
+double generateFLICCurvesPoint(double* ZGAP, double* FLIC, double* DERIV, int nimages) {
+
+	int i, j, counter;
+	double Pex;
+	double *Pem;
+	Pem = new double[FLIC_points];
+	double max_I = -1.0;
+
+
+	//Allocate ZGAP, the z-heights of the membrane that the FLIC intensities will be calculated
+	//forL
+	for (i = 0; i<FLIC_points; i++) {
+		ZGAP[i] = i*zGapSpacing + zGapMin;
+	}
+
+	//Calculate Pem for each height
+	cout << "\nCalculating Pem for FLIC - Point...\n";
+	//#pragma omp parallel for private(j)
+	for (j=0; j < FLIC_points; j++) {
+		Pem[j] = Pem_Simple_theta2_lambda_thetaEm(0, thetaObjMax, lambdaEmMin, lambdaEmMax, ZGAP[j], 0, PI);
+		cout << "\n" << "Pem[" << ZGAP[j] << "]: " << Pem[j];
+	}
+
+	//Loop through all the input parameters and calculate Pex and Pex*Pem
+	cout << "Calculating Pex for FLIC - Point...\n";
+	//#pragma omp parallel for private(i,j)
+	for (i = 0; i < nimages; i++) {
+		for (j = 0; j < FLIC_points; j++) {
+			Pex = Pex_Simple_thetaEx(0, PI, thetaLaser[i], lambdaEx, ZGAP[j]);
+			//cout << "FLIC_points: " << FLIC_points << " ZGAP: " << ZGAP[j] << "\n";
+			FLIC[i*FLIC_points + j] = Pex*Pem[j];
+			//FLIC[i*FLIC_points + j] = Pex;
+		}
+	}
+
+	//Calculate the derivatives of the FLIC curves
+	//Calculate Pem for each height - Deriv
+	cout << "Calculating Pem for FLIC - Point - Deriv...\n";
+	//#pragma omp parallel for private(j)
+	for (j = 0; j < FLIC_points; j++) {
+		Pem[j] = Pem_Simple_theta2_lambda_thetaEm(0, thetaObjMax, lambdaEmMin, lambdaEmMax, ZGAP[j]+zGap_derivStep, 0, PI);
+		//Pem[j] = 1;
+	}
+
+	//Loop through all the input parameters and calculate Pex and Pex*Pem - Deriv
+	cout << "Calculating Pex for FLIC - Point - Deriv...\n";
+	//#pragma omp parallel for private(i,j)
+	for (i = 0; i < nimages; i++) {
+		for (j = 0; j < FLIC_points; j++) {
+			//cout << "FLIC_points: " << FLIC_points << " ZGAP: " << ZGAP[j] << "\n";
+			Pex = Pex_Simple_thetaEx(0, PI, thetaLaser[i], lambdaEx, ZGAP[j]+zGap_derivStep);
+			DERIV[i*FLIC_points + j] = (Pex*Pem[j] - FLIC[i*FLIC_points + j])/zGap_derivStep;
+		}
+	}
+
+
+	//Normalize the FLIC curves
+	for (i = 0; i < nimages*FLIC_points; i++) {
+		if (FLIC[i] > max_I) {
+			max_I = FLIC[i];
+		}
+	}
+	for (i = 0; i < nimages*FLIC_points; i++) {
+		FLIC[i] = FLIC[i]/max_I;
+		//DERIV[i] = DERIV[i]/max_I;
+	}
+
+	delete [] Pem;
+
+	return max_I;
+}
+
+double generateFLICCurvesPointOx(double* ZGAP, double* FLIC, double* DERIV, int nimages) {
+
+	int i, j, counter;
+	double Pex;
+	double max_I = -1.0;
+
+	cout << "generateFLICCurvesPointOx\n";
+	//Allocate ZGAP, the z-heights of the membrane that the FLIC intensities will be calculated
+	//for
+	for (i = 0; i<FLIC_points; i++) {
+		ZGAP[i] = i*zGapSpacing + zGapMin;
+	}
+
+	//Loop through all the input parameters and calculate Pex
+	cout << "Calculating Pex for FLIC...\n";
+	//#pragma omp parallel for private(i,j)
+	for (i = 0; i < nimages; i++) {
+		for (j = 0; j < FLIC_points; j++) {
+			//FLIC[i*FLIC_points + j] = Pex_SimpleOx_thetaEx(0, PI, thetaLaser[i], lambdaEx, ZGAP[j]);
+			FLIC[i*FLIC_points + j] = Pex_SimpleOxRandom(thetaLaser[i], lambdaEx, ZGAP[j]);
+		}
+	}
+
+	//Loop through all the input parameters and calculate Pex - Deriv
+	cout << "Calculating Pex for FLIC - Deriv...\n";
+	//#pragma omp parallel for private(i,j)
+	for (i = 0; i < nimages; i++) {
+		for (j = 0; j < FLIC_points; j++) {
+			//Pex = Pex_SimpleOx_thetaEx(0, PI, thetaLaser[i], lambdaEx, ZGAP[j]+zGap_derivStep);
+			Pex = Pex_SimpleOxRandom(thetaLaser[i], lambdaEx, ZGAP[j]+zGap_derivStep);
+			DERIV[i*FLIC_points + j] = (Pex - FLIC[i*FLIC_points + j])/zGap_derivStep;
+
+		}
+	}
+
+
+	//Normalize the FLIC curves
+	for (i = 0; i < nimages*FLIC_points; i++) {
+		if (FLIC[i] > max_I) {
+			max_I = FLIC[i];
+		}
+	}
+	for (i = 0; i < nimages*FLIC_points; i++) {
+		FLIC[i] = FLIC[i]/max_I;
+		DERIV[i] = DERIV[i]/max_I;
+	}
+
+	return max_I;
+}
+
+double generateFLICCurvesCylinder(double* ZGAP, double* FLIC, double* DERIV, int nimages) {
+
+	int i, j, counter;
+	double Pex, zMin, zMax;
+	double *Pem;
+	Pem = new double[FLIC_points];
+	double max_I = -1.0;
+
+
+	//Allocate ZGAP, the z-heights of the membrane that the FLIC intensities will be calculated
+	//for
+	for (i = 0; i<FLIC_points; i++) {
+		ZGAP[i] = i*zGapSpacing + zGapMin;
+	}
+
+	//Assume Pem is constant
+
+	//Loop through all the input parameters and calculate Pex and Pex*Pem
+	cout << "Calculating Pex for FLIC...\n";
+	#pragma omp parallel for private(i,j)
+	for (i = 0; i < nimages; i++) {
+		for (j = 0; j < FLIC_points; j++) {
+			Pex = Pex_Simple_thetaEx_H(thetaLaser[i], lambdaEx, ZGAP[j]-0.5*length, ZGAP[j]+0.5*length);
+			FLIC[i*FLIC_points + j] = Pex;
+		}
+	}
+
+	//Loop through all the input parameters and calculate Pex and Pex*Pem - Deriv
+	cout << "Calculating Pex for FLIC - Deriv...\n";
+	#pragma omp parallel for private(i,j)
+	for (i = 0; i < nimages; i++) {
+		for (j = 0; j < FLIC_points; j++) {
+			Pex = Pex_Simple_thetaEx_H(thetaLaser[i], lambdaEx, ZGAP[j]+zGap_derivStep-0.5*length, ZGAP[j]+zGap_derivStep+0.5*length);
+			DERIV[i*FLIC_points + j] = (Pex - FLIC[i*FLIC_points + j])/zGap_derivStep;
+		}
+	}
+
+	//Normalize the FLIC curves
+	for (i = 0; i < nimages*FLIC_points; i++) {
+		if (FLIC[i] > max_I) {
+			max_I = FLIC[i];
+		}
+	}
+	for (i = 0; i < nimages*FLIC_points; i++) {
+		FLIC[i] = FLIC[i]/max_I;
+		DERIV[i] = DERIV[i]/max_I;
+	}
+
+	delete [] Pem;
+
+	return max_I;
+}
+
+double generateFLICCurvesSphere(double* ZGAP, double* FLIC, double* DERIV, int nimages) {
+
+	int i, j, counter;
+	double Pex;
+	double *Pem;
+	Pem = new double[FLIC_points];
+	double max_I = -1.0;
+
+	//Allocate ZGAP, the z-heights of the membrane that the FLIC intensities will be calculated
+	//for
+	for (i = 0; i<FLIC_points; i++) {
+		ZGAP[i] = i*zGapSpacing + zGapMin;
+	}
+
+	//Assume Pem is constant
+
+	//Loop through all the input parameters and calculate Pex and Pex*Pem
+	cout << "Calculating Pex for FLIC...\n";
+	#pragma omp parallel for private(i,j)
+	for (i = 0; i < nimages; i++) {
+		for (j = 0; j < FLIC_points; j++) {
+			Pex = Pex_Simple_Sphere_r_alpha_psi(thetaLaser[i], 0, PI, lambdaEx, ZGAP[j], radius);
+			FLIC[i*FLIC_points + j] = Pex;
+		}
+	}
+
+	//Loop through all the input parameters and calculate Pex and Pex*Pem - Deriv
+	cout << "Calculating Pex for FLIC - Deriv...\n";
+	#pragma omp parallel for private(i,j)
+	for (i = 0; i < nimages; i++) {
+		for (j = 0; j < FLIC_points; j++) {
+			Pex = Pex_Simple_Sphere_r_alpha_psi(thetaLaser[i], 0, PI, lambdaEx, ZGAP[j]+zGap_derivStep, radius);
+			DERIV[i*FLIC_points + j] = (Pex - FLIC[i*FLIC_points + j])/zGap_derivStep;
+		}
+	}
+
+	//Normalize the FLIC curves
+	for (i = 0; i < nimages*FLIC_points; i++) {
+		if (FLIC[i] > max_I) {
+			max_I = FLIC[i];
+		}
+	}
+	for (i = 0; i < nimages*FLIC_points; i++) {
+		FLIC[i] = FLIC[i]/max_I;
+		DERIV[i] = DERIV[i]/max_I;
+	}
+
+	delete [] Pem;
+
+	return max_I;
+}

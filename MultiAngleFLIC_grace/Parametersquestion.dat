@@ -1,0 +1,58 @@
+1. Program Mode: 11
+2. Dye - Fluorophore: Alexa488
+3. Dye - Dipole angle (only required for non-randomly oriented dyes; degrees): 90
+4. Model - Type: Membrane
+5. Model - Thickness of SiO2 layer (nm): 500
+6. Model - Refractive index SiO2 (n1): 1.46
+7. Model - Refractive index Si (n0)- real: 4.0
+8. Model - Refractive index Si (n0)- imaginary: 0.0
+9. Model (Membrane) - Refractive index of ambient medium or cytoplasm (n3): 1.33
+10. Model (Membrane) - Refractive index cell membrane (n2): 1.4
+11. Model (Membrane) - Refractive index glycocalyx (ng): 1.33
+12. Model (Membrane) - Thickness of cell membrane (nm): 4.0
+13. Model (Point, Cylinder, and Sphere) - Refractive index of ambient media or cytoplasm (n2): 1.33
+14. Model (Cylinder) - Cylinder verticle length (nm): 10
+15. Model (Sphere) - Sphere radius (nm): 100
+16. Microscope - Wavelength of exciting laser (nm): 488
+17. Microscope - Range of emission wavelengths (nm): 500, 550
+18. Microscope - Maximum Objective Angle (degree): 63
+19. Curves - Range of FLIC Curves (height - nm): 844,844
+20. Curves - Sampling rate of FLIC curves (height - nm): 1
+21. Curves - FLIC curve derivative step size (nm): 0.025
+22. Input - Primary FLIC data source: Array
+23. Input - Number of angles: 53
+24. Input - Image angles (degrees): 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52
+25. Input - Angle redundacy: 1
+26. Input - Correct Intensities: 0
+27. Input - Reference Intensities: 1.0,0.97,0.99,1.05,1.07,1.11,1.13,1.20,1.25,1.31,1.50
+28. Input - Background subtraction: 0
+29. Input - Threshold: 0
+30. Input - Threshold integer to process: 0
+31. Input - 1st number in image sequences: 0
+32. Input - Image file extension: .tif
+33. Input - FLIC data array (for FLIC data - Array only): 0.295714700336666,0.286682953234543,0.248930207260793,0.192783853323811,0.147692562219044,0.104433470337987,0.118901534116019,0.216146653939264,0.416623453065587,0.723909887262253,0.969865937365103,1,0.745750539058983,0.295417372845456
+34. Fit - Parameters: HoAB
+35. Fit - A Range: 0.1, 1.2
+36. Fit - B Range: -0.2, 0.3
+37. Fit - H Range (nm): 480, 940
+38. Fit - L Range (nm): 2.0, 100.0
+39. Fit - A Guess: 20000
+40. Fit - B Guess: 5000
+41. Fit - H Guess (nm): 500.0
+42. Fit - L Guess (nm): 20
+43. Fit - Multistart step size: 35
+44. Fit - Solver: l
+45. Fit - Constraint: 0
+46. Fit - Starting Column: 0
+47. Fit - Starting Row: 0
+48. Fit - Maximum height change: 100
+49. Fit - Use curves: 1
+50. Surface: 1 
+51. Surface - Smoothness: 5
+52. Surface - Interpolation method: t
+53. Surface - Regularizer: g
+54. Surface - x-increment: 0.5
+55. Surface - y-increment: 0.5
+56. Surface - number of fit pixels (Program mode 4 only): 200
+57. Threads: 8
+58. Report: 1

@@ -1,0 +1,58 @@
+PARAMETERS: 
+2
+	Image Name: 488Wafer5Pos2
+	Model: Point
+	Fluorophore: DiI
+	Fluorophore Dipole Angle: 90
+	Refractive Index - Silicon Oxide: 1.46
+	Refractive Index - Silicon: (4.293,0.05)
+	 Thickness - Silicon Oxide (nm): 513
+	 Refractive Index - Buffer/Cytoplasm: 1.33
+	Cylinder vertical length: NA
+	Sphere Radius: NA
+	Excitation Wavelength: 561
+	Emission Wavelength Min: 590
+	Emission Wavelength Max: 650
+	Objective NA: 1.2
+	FLIC Curves - Min Z: 0
+	FLIC Curves - Max Z: 120
+	FLIC Curves - Z spacing: 20
+	FLIC Curves - Points: 7
+	FLIC Curves - Derivative Step: 0.025
+	Number of Images/Angles: 53
+	Number of Angle Stacks per Set: 1
+	Image Angles: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 
+	Intensities corrected: 0
+	Intensitiy correction factors: 
+	Image file ext: .tif
+	Solver: l
+	Parameters: HAB
+	Constraint: 0
+	A Guess: 30000
+	B Guess: 5000
+	H Guess: 500
+	Z-Height - Lower Bounds: 460
+	Z-Height - Upper Bounds: 950
+	A - Lower Bounds: 0
+	A - Upper Bounds: 1
+	B - Lower Bounds: -0.2
+	B - Upper Bounds: 0.2
+	MultiStart Step Size: 25
+	Maximum displacement in constrained local fitting: 100
+	Local fitting starting row: 0
+	Local fitting starting column: 0
+	Surface: 1
+	Surface Smoothness: 5
+	Surface Interpolation Method: t
+	Surface Regularizer: g
+	Surface x-increment: 0.5
+	Surface y-increment: 0.5
+
+55	CONSTANTS: 
+56
+	PI: 3.14159 DTR: 0.0174533 RTD: 57.2958
+
+
+Curves:
+
+	FLIC curve Normalization factor: 2.61265

@@ -1,0 +1,12 @@
+Malavi Instruction Set
+
+Scene -> Lights:
+
+Light mode: vtk
+number of lights: 2
+first light:  elevation maximal, azimuth 33%, intensity 85%
+second light: elevation 90%, azimuth 15%, intensity 15%
+
+Colors and Legends: RdYlBlue
+
+Surface -> Actor -> Interpolate before scaling

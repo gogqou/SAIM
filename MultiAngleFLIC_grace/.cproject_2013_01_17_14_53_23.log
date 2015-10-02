@@ -1,0 +1,37 @@
+Project Name: MultiAngleFLIC
+
+Updating an Intel configuration to Use GCC: Release (id = intel.linux.x86_64.exe.rel.212211092_11.1.0)
+  Processing project-level settings:
+    mapping tool info: Intel Intel(R) 64 C++ Compiler  (v11.1.0) -> GCC C++ Compiler
+      warning: -inline-level=2 can't be mapped to a GCC option. It will reappear when the new GCC configuration is updated to use Intel(R) C++ Compiler
+      copied -I /opt/intel/Compiler/11.1/073/mkl/include -I /usr/include/ImageMagick 
+      copied -g
+      warning: -xSSE4.1 -O2 -std=c99 -openmp can't be mapped to a GCC option. It will reappear when the new GCC configuration is updated to use Intel(R) C++ Compiler
+    mapping tool info: Intel Intel(R) 64 C Compiler (v11.1.0) -> GCC C Compiler
+      copied -I /opt/intel/Compiler/11.1/073/mkl/include -I /usr/include/ImageMagick 
+      copied -g
+    mapping tool info: Intel Intel(R) 64 C Linker (v11.1.0) -> GCC C Linker
+    mapping tool info: Intel Intel(R) 64 C++ Linker (v11.1.0) -> GCC C++ Linker
+      copied -l mkl_intel_lp64 -l mkl_intel_thread -l mkl_lapack -l mkl_core -l iomp5 -l pthread -l tiff -l gsl -l gslcblas -l Magick++ 
+      copied /opt/intel/Compiler/11.1/073/mkl/lib/em64t/libmkl_solver_lp64.a(Other objects)
+
+  => New Configuration Name: Release_g (id = cdt.managedbuild.config.gnu.exe.release.1752445540)
+
+Updating an Intel configuration to Use GCC: Debug (id = intel.linux.x86_64.exe.dbg.2041926421_11.1.0)
+  Processing project-level settings:
+    mapping tool info: Intel Intel(R) 64 C++ Compiler  (v11.1.0) -> GCC C++ Compiler
+      copied -I /opt/intel/Compiler/11.1/073/mkl/include -I /usr/include/ImageMagick 
+      copied -g
+      warning: -xSSE4.1 -std=c99 -openmp can't be mapped to a GCC option. It will reappear when the new GCC configuration is updated to use Intel(R) C++ Compiler
+    mapping tool info: Intel Intel(R) 64 C Compiler (v11.1.0) -> GCC C Compiler
+      copied -I /opt/intel/Compiler/11.1/073/mkl/include -I /usr/include/ImageMagick 
+      copied -g
+    mapping tool info: Intel Intel(R) 64 C Linker (v11.1.0) -> GCC C Linker
+    mapping tool info: Intel Intel(R) 64 C++ Linker (v11.1.0) -> GCC C++ Linker
+      copied -l mkl_intel_lp64 -l mkl_intel_thread -l mkl_lapack -l mkl_core -l iomp5 -l pthread -l tiff -l gsl -l gslcblas -l Magick++ 
+      copied /opt/intel/Compiler/11.1/073/mkl/lib/em64t/libmkl_solver_lp64.a(Other objects)
+
+  => New Configuration Name: Debug_g (id = cdt.managedbuild.config.gnu.exe.debug.342286280)
+
+
+.cproject file was backed up to .cproject_2013_01_17_14_53_23

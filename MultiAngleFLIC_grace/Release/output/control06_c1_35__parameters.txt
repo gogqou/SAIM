@@ -1,0 +1,32 @@
+Refractive Index - Buffer/Cytoplasm: 1.33
+Refractive Index - Membrane: 1.44
+Refractive Index - Glycocalyx: 1.33
+Refractive Index - Silicon Oxide: 1.46
+Refractive Index - Silicon: (4,0)
+Thickness - Cell Membrane (nm): 4
+Thickness - Silicon Oxide (nm): 500
+Fluorophore: DiO
+Fluorophore Dipole Angle: 1.5708
+Excitation Wavelength: 488
+Emission Wavelength Min: 500
+Emission Wavelength Max: 550
+FLIC Curves - Max Z: 1000
+FLIC Curves - Z spacing: 1
+FLIC Curves - Points: 1001
+FLIC Curves - Derivative Step: 0.025
+Number of Images/Angles: 8
+Number of Image Sets: 2
+A Guess: 32767.5
+B Guess: 3276.75
+Z-Height - Lower Bounds: 25
+Z-Height - Upper Bounds: 200
+A - Lower Bounds: 30
+A - Upper Bounds: 52428
+B - Lower Bounds: 0
+B - Upper Bounds: 26214
+Cutoff Intensity: 65535
+MultiStart Step Size: 25
+Maximum displacement in constrained local fitting: 100
+Local fitting starting row: 125
+Local fitting starting column: 75
+Solver: c
